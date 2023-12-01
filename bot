@@ -1,0 +1,33 @@
+from telegram.ext import Updater, MessageHandler, filters, CallbackContext
+from apscheduler.schedulers.background import BackgroundScheduler  # Install apscheduler using 'pip install apscheduler'
+import logging
+
+TOKEN = "6738856705:AAFQB-rZQ2G6ZcY0vjcEQMRYJFIqDeQFnfg"
+TARGET_USER_ID = 5004859737
+
+def start(update, context):
+    update.message.reply_text("Bot is running!")
+
+def check_online(context: CallbackContext):
+    user = context.job.context['user']
+    if user.is_online:
+        context.bot.send_message(chat_id=context.job.context['chat_id'], text="Target user is online!")
+
+def main():
+    updater = Updater(token=TOKEN, use_context=True)
+    dp = updater.dispatcher
+
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
+    dp.add_handler(MessageHandler(Filters.command, start))
+
+    # Schedule the job to check online status every 5 minutes
+    job_queue = updater.job_queue
+    job_queue.run_repeating(check_online, interval=300, first=0, context={'user': updater.bot.get_chat(TARGET_USER_ID), 'chat_id': TARGET_USER_ID})
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
+
